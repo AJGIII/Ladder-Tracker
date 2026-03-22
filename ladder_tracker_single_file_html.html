@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ladder Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .card-shadow { box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12); }
+    .soft-shadow { box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-900">
+  <div class="max-w-7xl mx-auto p-4 md:p-8 grid lg:grid-cols-[1.15fr_0.85fr] gap-6">
+    <div class="bg-white rounded-[28px] card-shadow overflow-hidden">
+      <div class="p-6 border-b border-slate-200">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 class="text-3xl font-bold">Ladder Tracker</h1>
+            <p class="text-sm text-slate-500 mt-1">Track each leg, lock the next play, and grade the run accurately.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button id="exportBtn" class="px-4 h-11 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-sm font-medium">Export Run</button>
+            <button id="restartBtn" class="px-4 h-11 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-sm font-medium">Restart Run</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-6">
+        <div class="grid md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-2">Run name</label>
+            <input id="runName" value="Road to 1K" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">Starting bankroll</label>
+            <input id="startingBankroll" type="number" inputmode="decimal" value="10" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">Goal bankroll</label>
+            <input id="targetBankroll" type="number" inputmode="decimal" value="1000" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
+            <div class="text-sm text-slate-500">Current bankroll</div>
+            <div id="currentBankrollDisplay" class="text-3xl font-bold mt-2">$10.00</div>
+          </div>
+          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
+            <div class="text-sm text-slate-500">Total P/L</div>
+            <div id="totalProfitDisplay" class="text-3xl font-bold mt-2 text-green-600">+$0.00</div>
+          </div>
+          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
+            <div class="text-sm text-slate-500">Goal</div>
+            <div id="goalDisplay" class="text-3xl font-bold mt-2">$1,000.00</div>
+          </div>
+          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
+            <div class="text-sm text-slate-500">Heat check</div>
+            <div id="nextPlaySummary" class="text-xl font-bold mt-2">Pending</div>
+          </div>
+        </div>
+
+        <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-5">
+          <div class="flex items-center justify-between text-sm mb-3">
+            <span class="text-slate-500">Run progress</span>
+            <span id="progressLabel" class="font-medium">0%</span>
+          </div>
+          <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full bg-slate-900 rounded-full" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="grid xl:grid-cols-[0.95fr_1.05fr] gap-6">
+          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
+            <h2 class="text-xl font-bold mb-4">Lock next ladder leg</h2>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium mb-2">Stake</label>
+                <input id="betStake" type="number" inputmode="decimal" placeholder="10" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">American odds</label>
+                <input id="betOdds" type="number" inputmode="numeric" placeholder="-235" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Note</label>
+                <input id="betNote" placeholder="Optional note" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+              </div>
+              <button id="lockBtn" class="w-full h-12 rounded-2xl bg-slate-950 text-white font-medium hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">Lock Next Ladder Leg</button>
+            </div>
+
+            <div id="lockedBetWrap" class="hidden mt-5 space-y-4">
+              <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+                <div class="font-semibold">Locked in</div>
+                <div id="lockedBetLine1" class="text-sm text-slate-600 mt-1"></div>
+                <div id="lockedBetLine2" class="text-sm text-slate-600"></div>
+                <div id="lockedBetNote" class="text-xs text-slate-500 mt-2 hidden"></div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button id="wonBtn" class="h-12 rounded-2xl bg-slate-950 text-white font-medium hover:bg-slate-800">Won</button>
+                <button id="lostBtn" class="h-12 rounded-2xl border border-slate-300 bg-white font-medium hover:bg-slate-50">Lost</button>
+                <button id="cashoutBtn" class="h-12 rounded-2xl bg-red-600 text-white font-medium hover:bg-red-700">Cash Out (End Run)</button>
+              </div>
+              <div class="text-xs text-slate-500">Cash Out (End Run) records your actual cash out amount and ends the active play without requiring a full win or loss.</div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
+            <h2 class="text-xl font-bold mb-4">Run history</h2>
+            <div id="historyList" class="space-y-3">
+              <div id="emptyHistory" class="rounded-2xl border border-dashed border-slate-300 p-6 text-slate-500 text-sm">No plays graded yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="exportCard" class="w-full max-w-md mx-auto rounded-[28px] overflow-hidden border border-slate-200 bg-white card-shadow self-start">
+      <div class="px-6 py-5 bg-slate-950 text-white">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <div class="text-xs uppercase tracking-[0.25em] text-slate-300">Ladder Tracker</div>
+            <div id="exportRunName" class="text-2xl font-bold mt-1">Road to 1K</div>
+          </div>
+          <div class="rounded-2xl bg-white/10 p-3 text-xl">📈</div>
+        </div>
+      </div>
+      <div class="p-6 space-y-5">
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="rounded-2xl border border-slate-200 p-3">
+            <div class="text-xs text-slate-500">Start</div>
+            <div id="exportStart" class="font-semibold text-lg">$10.00</div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 p-3">
+            <div class="text-xs text-slate-500">Now</div>
+            <div id="exportNow" class="font-semibold text-lg">$10.00</div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 p-3">
+            <div class="text-xs text-slate-500">Goal</div>
+            <div id="exportGoal" class="font-semibold text-lg">$1,000.00</div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Run Progress</span>
+            <span id="exportProgressLabel" class="font-medium">0%</span>
+          </div>
+          <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+            <div id="exportProgressBar" class="h-full bg-slate-900 rounded-full" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-slate-500">Profit / Loss</span>
+            <span id="exportPL" class="text-xl font-bold text-green-600">+$0.00</span>
+          </div>
+          <div class="border-t border-slate-200"></div>
+          <div class="space-y-2">
+            <div class="text-sm text-slate-500">Next play</div>
+            <div id="exportNextPlay" class="font-semibold text-base">Pending</div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 p-4">
+          <div class="text-sm text-slate-500 mb-3">Run Log</div>
+          <div id="exportLog" class="space-y-2 max-h-80 overflow-auto pr-1">
+            <div class="text-sm text-slate-400">No bets logged yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalOverlay" class="hidden fixed inset-0 bg-slate-950/50 p-4 items-center justify-center z-50">
+    <div class="w-full max-w-md bg-white rounded-[28px] p-6 card-shadow">
+      <div class="text-2xl font-bold" id="modalTitle"></div>
+      <div class="text-slate-600 mt-2" id="modalDescription"></div>
+      <div class="mt-6 flex flex-wrap justify-end gap-2" id="modalActions"></div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      bets: [],
+      pendingBet: null,
+      shownGoal: false,
+      shownBusted: false,
+    };
+
+    const els = {
+      runName: document.getElementById('runName'),
+      startingBankroll: document.getElementById('startingBankroll'),
+      targetBankroll: document.getElementById('targetBankroll'),
+      betStake: document.getElementById('betStake'),
+      betOdds: document.getElementById('betOdds'),
+      betNote: document.getElementById('betNote'),
+      lockBtn: document.getElementById('lockBtn'),
+      wonBtn: document.getElementById('wonBtn'),
+      lostBtn: document.getElementById('lostBtn'),
+      cashoutBtn: document.getElementById('cashoutBtn'),
+      restartBtn: document.getElementById('restartBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+      lockedBetWrap: document.getElementById('lockedBetWrap'),
+      lockedBetLine1: document.getElementById('lockedBetLine1'),
+      lockedBetLine2: document.getElementById('lockedBetLine2'),
+      lockedBetNote: document.getElementById('lockedBetNote'),
+      historyList: document.getElementById('historyList'),
+      emptyHistory: document.getElementById('emptyHistory'),
+      currentBankrollDisplay: document.getElementById('currentBankrollDisplay'),
+      totalProfitDisplay: document.getElementById('totalProfitDisplay'),
+      goalDisplay: document.getElementById('goalDisplay'),
+      nextPlaySummary: document.getElementById('nextPlaySummary'),
+      progressLabel: document.getElementById('progressLabel'),
+      progressBar: document.getElementById('progressBar'),
+      exportRunName: document.getElementById('exportRunName'),
+      exportStart: document.getElementById('exportStart'),
+      exportNow: document.getElementById('exportNow'),
+      exportGoal: document.getElementById('exportGoal'),
+      exportProgressLabel: document.getElementById('exportProgressLabel'),
+      exportProgressBar: document.getElementById('exportProgressBar'),
+      exportPL: document.getElementById('exportPL'),
+      exportNextPlay: document.getElementById('exportNextPlay'),
+      exportLog: document.getElementById('exportLog'),
+      modalOverlay: document.getElementById('modalOverlay'),
+      modalTitle: document.getElementById('modalTitle'),
+      modalDescription: document.getElementById('modalDescription'),
+      modalActions: document.getElementById('modalActions'),
+    };
+
+    function round2(n) {
+      return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+    }
+
+    function formatMoney(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(Number(value || 0));
+    }
+
+    function formatOdds(odds) {
+      const n = Number(odds);
+      if (!Number.isFinite(n) || n === 0) return '--';
+      return n > 0 ? `+${n}` : `${n}`;
+    }
+
+    function americanToDecimal(odds) {
+      const n = Number(odds);
+      if (!Number.isFinite(n) || n === 0) return null;
+      return n > 0 ? 1 + (n / 100) : 1 + (100 / Math.abs(n));
+    }
+
+    function americanProfit(stake, odds) {
+      const dec = americanToDecimal(odds);
+      if (!dec || !Number.isFinite(stake)) return 0;
+      return round2(stake * (dec - 1));
+    }
+
+    function getStartingBankroll() {
+      const n = Number(els.startingBankroll.value);
+      return Number.isFinite(n) && n >= 0 ? round2(n) : 0;
+    }
+
+    function getTargetBankroll() {
+      const n = Number(els.targetBankroll.value);
+      return Number.isFinite(n) && n > 0 ? round2(n) : 0;
+    }
+
+    function getCurrentBankroll() {
+      const start = getStartingBankroll();
+      return round2(state.bets.reduce((roll, bet) => {
+        if (bet.result === 'win') return roll + bet.profit;
+        if (bet.result === 'loss') return roll - bet.stake;
+        if (bet.result === 'cashout') return roll + (bet.cashoutAmount - bet.stake);
+        return roll;
+      }, start));
+    }
+
+    function getProgress(current, start, goal) {
+      if (goal <= start) return 0;
+      return Math.max(0, Math.min(100, ((current - start) / (goal - start)) * 100));
+    }
+
+    function nextPlayLabel() {
+      if (!state.pendingBet) return 'Pending';
+      const p = state.pendingBet;
+      return `${formatMoney(p.stake)} at ${formatOdds(p.odds)}${p.note ? ` · ${p.note}` : ''}`;
+    }
+
+    function getToneClass(result) {
+      if (result === 'win') return 'bg-green-50 text-green-700 border-green-200';
+      if (result === 'loss') return 'bg-red-50 text-red-700 border-red-200';
+      if (result === 'cashout') return 'bg-amber-50 text-amber-700 border-amber-200';
+      return 'bg-slate-50 text-slate-700 border-slate-200';
+    }
+
+    function clearBetInputs() {
+      els.betStake.value = '';
+      els.betOdds.value = '';
+      els.betNote.value = '';
+      state.pendingBet = null;
+    }
+
+    function restartRun() {
+      state.bets = [];
+      state.pendingBet = null;
+      state.shownGoal = false;
+      state.shownBusted = false;
+      clearBetInputs();
+      render();
+    }
+
+    function showModal(title, description, actions) {
+      els.modalTitle.textContent = title;
+      els.modalDescription.textContent = description;
+      els.modalActions.innerHTML = '';
+      actions.forEach(action => {
+        const btn = document.createElement('button');
+        btn.textContent = action.label;
+        btn.className = action.primary
+          ? 'px-4 h-11 rounded-2xl bg-slate-950 text-white font-medium hover:bg-slate-800'
+          : 'px-4 h-11 rounded-2xl border border-slate-300 bg-white font-medium hover:bg-slate-50';
+        btn.onclick = () => {
+          hideModal();
+          action.onClick();
+        };
+        els.modalActions.appendChild(btn);
+      });
+      els.modalOverlay.classList.remove('hidden');
+      els.modalOverlay.classList.add('flex');
+    }
+
+    function hideModal() {
+      els.modalOverlay.classList.add('hidden');
+      els.modalOverlay.classList.remove('flex');
+    }
+
+    function lockNextPlay() {
+      const stake = round2(Number(els.betStake.value));
+      const odds = Number(els.betOdds.value);
+      const currentBankroll = getCurrentBankroll();
+      if (!Number.isFinite(stake) || stake <= 0) return;
+      if (!Number.isFinite(odds) || odds === 0) return;
+      if (stake > currentBankroll) {
+        showModal('Invalid stake', 'Stake cannot be greater than your current bankroll.', [{ label: 'OK', primary: true, onClick: () => {} }]);
+        return;
+      }
+
+      const profit = americanProfit(stake, odds);
+      const returnAmount = round2(stake + profit);
+      state.pendingBet = {
+        id: crypto.randomUUID(),
+        stake,
+        odds,
+        note: els.betNote.value.trim(),
+        profit,
+        returnAmount,
+      };
+      render();
+    }
+
+    function gradePendingBet(result) {
+      if (!state.pendingBet) return;
+      const completed = {
+        ...state.pendingBet,
+        result,
+        cashoutAmount: result === 'cashout' ? state.pendingBet.stake : undefined,
+        settledAt: new Date().toISOString(),
+      };
+      state.bets.push(completed);
+      clearBetInputs();
+      render();
+      postGradeChecks();
+    }
+
+    function cashOutRun() {
+      if (!state.pendingBet) return;
+      const input = prompt('Enter cash out amount', String(state.pendingBet.stake));
+      if (input === null) return;
+      const amount = round2(Number(input));
+      if (!Number.isFinite(amount) || amount < 0) return;
+
+      const start = getStartingBankroll();
+      const current = getCurrentBankroll();
+      const projectedBankroll = round2(current + (amount - state.pendingBet.stake));
+      const projectedProfit = round2(projectedBankroll - start);
+      const goal = getTargetBankroll();
+
+      state.bets.push({
+        ...state.pendingBet,
+        result: 'cashout',
+        cashoutAmount: amount,
+        settledAt: new Date().toISOString(),
+      });
+      clearBetInputs();
+      render();
+
+      if (projectedProfit > 0 && projectedBankroll < goal) {
+        showModal('Profit secured', `You ended the run before the goal, but still locked in profit. Current bankroll: ${formatMoney(projectedBankroll)}.`, [
+          { label: 'Nice', primary: true, onClick: () => {} }
+        ]);
+      }
+
+      postGradeChecks();
+    }
+
+    function postGradeChecks() {
+      const current = getCurrentBankroll();
+      const goal = getTargetBankroll();
+
+      if (!state.shownGoal && goal > 0 && current >= goal) {
+        state.shownGoal = true;
+        showModal('Goal hit', `Your bankroll reached ${formatMoney(current)} and cleared the goal of ${formatMoney(goal)}.`, [
+          { label: 'Keep Reviewing', primary: true, onClick: () => {} },
+          { label: 'Start New Run', primary: false, onClick: restartRun }
+        ]);
+        return;
+      }
+
+      if (!state.shownBusted && state.bets.length > 0 && current <= 0) {
+        state.shownBusted = true;
+        showModal('Win some lose some', `Bankroll is at ${formatMoney(current)}. This run is over. Reset and start a new one.`, [
+          { label: 'Restart Run', primary: true, onClick: restartRun }
+        ]);
+      }
+    }
+
+    function renderHistory() {
+      els.historyList.innerHTML = '';
+      if (state.bets.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'rounded-2xl border border-dashed border-slate-300 p-6 text-slate-500 text-sm';
+        empty.textContent = 'No plays graded yet.';
+        els.historyList.appendChild(empty);
+        return;
+      }
+
+      state.bets.forEach((bet, idx) => {
+        const item = document.createElement('div');
+        item.className = 'rounded-2xl border border-slate-200 p-4';
+
+        let detail = '';
+        if (bet.result === 'win') detail = `Return ${formatMoney(bet.returnAmount)} · Profit ${formatMoney(bet.profit)}`;
+        if (bet.result === 'loss') detail = `Lost stake ${formatMoney(bet.stake)}`;
+        if (bet.result === 'cashout') detail = `Cash out amount ${formatMoney(bet.cashoutAmount)} · Net ${formatMoney(bet.cashoutAmount - bet.stake)}`;
+
+        item.innerHTML = `
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div class="font-semibold">Leg ${idx + 1}</div>
+              <div class="text-sm text-slate-500">${formatMoney(bet.stake)} at ${formatOdds(bet.odds)}</div>
+            </div>
+            <span class="px-3 py-1 rounded-full text-sm border ${getToneClass(bet.result)}">${bet.result === 'cashout' ? 'Cash Out' : bet.result === 'win' ? 'Won' : 'Lost'}</span>
+          </div>
+          <div class="text-sm text-slate-600 mt-2">${detail}</div>
+          ${bet.note ? `<div class="text-xs text-slate-500 mt-2">${bet.note}</div>` : ''}
+        `;
+        els.historyList.appendChild(item);
+      });
+    }
+
+    function renderExportLog() {
+      els.exportLog.innerHTML = '';
+      if (state.bets.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'text-sm text-slate-400';
+        empty.textContent = 'No bets logged yet.';
+        els.exportLog.appendChild(empty);
+        return;
+      }
+
+      state.bets.forEach((bet, idx) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'rounded-2xl bg-slate-50 p-3 border border-slate-200';
+
+        let detail = '';
+        if (bet.result === 'win') detail = `Returned ${formatMoney(bet.returnAmount)} · Profit ${formatMoney(bet.profit)}`;
+        if (bet.result === 'loss') detail = `Lost ${formatMoney(bet.stake)}`;
+        if (bet.result === 'cashout') detail = `Cashed out for ${formatMoney(bet.cashoutAmount)} · Net ${formatMoney(bet.cashoutAmount - bet.stake)}`;
+
+        wrap.innerHTML = `
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="font-medium">Leg ${idx + 1}</div>
+              <div class="text-sm text-slate-500">Stake ${formatMoney(bet.stake)} · Odds ${formatOdds(bet.odds)}</div>
+            </div>
+            <span class="px-3 py-1 rounded-full text-sm border ${getToneClass(bet.result)}">${bet.result === 'cashout' ? 'Cash Out' : bet.result === 'win' ? 'Won' : 'Lost'}</span>
+          </div>
+          <div class="mt-2 text-sm text-slate-600">${detail}</div>
+          ${bet.note ? `<div class="mt-2 text-xs text-slate-500">${bet.note}</div>` : ''}
+        `;
+        els.exportLog.appendChild(wrap);
+      });
+    }
+
+    function renderLockedBet() {
+      if (!state.pendingBet) {
+        els.lockedBetWrap.classList.add('hidden');
+        return;
+      }
+      els.lockedBetWrap.classList.remove('hidden');
+      els.lockedBetLine1.textContent = `Stake ${formatMoney(state.pendingBet.stake)} at ${formatOdds(state.pendingBet.odds)}`;
+      els.lockedBetLine2.textContent = `Potential return ${formatMoney(state.pendingBet.returnAmount)} · Profit ${formatMoney(state.pendingBet.profit)}`;
+      if (state.pendingBet.note) {
+        els.lockedBetNote.textContent = state.pendingBet.note;
+        els.lockedBetNote.classList.remove('hidden');
+      } else {
+        els.lockedBetNote.classList.add('hidden');
+      }
+    }
+
+    function render() {
+      const start = getStartingBankroll();
+      const current = getCurrentBankroll();
+      const goal = getTargetBankroll();
+      const progress = getProgress(current, start, goal);
+      const totalProfit = round2(current - start);
+      const nextPlay = nextPlayLabel();
+
+      els.currentBankrollDisplay.textContent = formatMoney(current);
+      els.goalDisplay.textContent = formatMoney(goal);
+      els.nextPlaySummary.textContent = nextPlay;
+      els.progressLabel.textContent = `${progress.toFixed(0)}%`;
+      els.progressBar.style.width = `${progress}%`;
+
+      els.totalProfitDisplay.textContent = `${totalProfit >= 0 ? '+' : ''}${formatMoney(totalProfit)}`;
+      els.totalProfitDisplay.className = `text-3xl font-bold mt-2 ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+
+      els.exportRunName.textContent = els.runName.value || 'Current Run';
+      els.exportStart.textContent = formatMoney(start);
+      els.exportNow.textContent = formatMoney(current);
+      els.exportGoal.textContent = formatMoney(goal);
+      els.exportProgressLabel.textContent = `${progress.toFixed(0)}%`;
+      els.exportProgressBar.style.width = `${progress}%`;
+      els.exportPL.textContent = `${totalProfit >= 0 ? '+' : ''}${formatMoney(totalProfit)}`;
+      els.exportPL.className = `text-xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+      els.exportNextPlay.textContent = nextPlay;
+
+      const stake = Number(els.betStake.value);
+      const odds = Number(els.betOdds.value);
+      const canLock = Number.isFinite(stake) && stake > 0 && Number.isFinite(odds) && odds !== 0 && stake <= current && !state.pendingBet;
+      els.lockBtn.disabled = !canLock;
+      els.lockBtn.className = `w-full h-12 rounded-2xl font-medium ${canLock ? 'bg-slate-950 text-white hover:bg-slate-800' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`;
+
+      renderLockedBet();
+      renderHistory();
+      renderExportLog();
+    }
+
+    function exportRunJson() {
+      const payload = {
+        runName: els.runName.value || 'Current Run',
+        startBankroll: getStartingBankroll(),
+        currentBankroll: getCurrentBankroll(),
+        targetBankroll: getTargetBankroll(),
+        bets: state.bets,
+        nextPlayLabel: nextPlayLabel(),
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(payload.runName || 'ladder-run').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    els.lockBtn.addEventListener('click', lockNextPlay);
+    els.wonBtn.addEventListener('click', () => gradePendingBet('win'));
+    els.lostBtn.addEventListener('click', () => gradePendingBet('loss'));
+    els.cashoutBtn.addEventListener('click', cashOutRun);
+    els.restartBtn.addEventListener('click', restartRun);
+    els.exportBtn.addEventListener('click', exportRunJson);
+
+    [els.runName, els.startingBankroll, els.targetBankroll, els.betStake, els.betOdds, els.betNote].forEach(el => {
+      el.addEventListener('input', render);
+    });
+
+    els.modalOverlay.addEventListener('click', (e) => {
+      if (e.target === els.modalOverlay) hideModal();
+    });
+
+    render();
+  </script>
+</body>
+</html>
