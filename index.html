@@ -18,7 +18,7 @@
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 class="text-3xl font-bold">Ladder Tracker</h1>
-            <p class="text-sm text-slate-500 mt-1">Track each leg, lock the next play, and grade the run accurately.</p>
+            <p class="text-sm text-slate-500 mt-1">A strict step-by-step ladder flow. Lock a play, grade it, then move to the next one.</p>
           </div>
           <div class="flex flex-wrap gap-2">
             <button id="exportBtn" class="px-4 h-11 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-sm font-medium">Export Run</button>
@@ -57,15 +57,21 @@
             <div id="goalDisplay" class="text-2xl md:text-3xl font-bold mt-2">$1,000.00</div>
           </div>
           <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
-            <div class="text-sm text-slate-500">Heat check</div>
+            <div class="text-sm text-slate-500">Next Play</div>
             <div id="nextPlaySummary" class="text-base md:text-xl font-bold mt-2 break-words">Pending</div>
           </div>
         </div>
 
-        <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-5">
-          <div class="flex items-center justify-between text-sm mb-3">
-            <span class="text-slate-500">Run progress</span>
-            <span id="progressLabel" class="font-medium">0%</span>
+        <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-5 space-y-3">
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <div class="text-sm text-slate-500">Run progress</div>
+              <div class="text-xs text-slate-500 mt-1" id="stepHint">Step 1: Lock your next play.</div>
+            </div>
+            <div class="text-right">
+              <div id="progressLabel" class="font-medium text-sm">0%</div>
+              <div id="stepBadge" class="inline-flex mt-1 px-3 py-1 rounded-full text-xs border bg-slate-950 text-white border-slate-950">Step 1 · Lock Play</div>
+            </div>
           </div>
           <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
             <div id="progressBar" class="h-full bg-slate-900 rounded-full" style="width:0%"></div>
@@ -74,7 +80,10 @@
 
         <div class="grid xl:grid-cols-[0.95fr_1.05fr] gap-6">
           <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
-            <h2 class="text-xl font-bold mb-4">Lock next ladder leg</h2>
+            <h2 class="text-xl font-bold mb-4">Strict ladder flow</h2>
+
+            <div id="setupWarning" class="hidden mb-4 rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 p-4 text-sm"></div>
+
             <div class="space-y-4">
               <div>
                 <label class="block text-sm font-medium mb-2">Stake</label>
@@ -88,23 +97,26 @@
                 <label class="block text-sm font-medium mb-2">Note</label>
                 <input id="betNote" placeholder="Optional note" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
               </div>
-              <button id="lockBtn" class="w-full h-12 rounded-2xl bg-slate-950 text-white font-medium hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">Lock Next Ladder Leg</button>
             </div>
 
-            <div id="lockedBetWrap" class="hidden mt-5 space-y-4">
-              <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
-                <div class="font-semibold">Locked in</div>
-                <div id="lockedBetLine1" class="text-sm text-slate-600 mt-1"></div>
-                <div id="lockedBetLine2" class="text-sm text-slate-600"></div>
-                <div id="lockedBetNote" class="text-xs text-slate-500 mt-2 hidden"></div>
-              </div>
+            <div class="mt-5 space-y-4">
+              <button id="lockBtn" class="w-full h-12 rounded-2xl bg-slate-950 text-white font-medium hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">Step 1: Lock Next Play</button>
 
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <button id="wonBtn" class="h-12 rounded-2xl bg-slate-950 text-white font-medium hover:bg-slate-800">Won</button>
-                <button id="lostBtn" class="h-12 rounded-2xl border border-slate-300 bg-white font-medium hover:bg-slate-50">Lost</button>
-                <button id="cashoutBtn" class="h-12 rounded-2xl bg-red-600 text-white font-medium hover:bg-red-700">Cash Out (End Run)</button>
+              <div id="lockedBetWrap" class="hidden space-y-4">
+                <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+                  <div class="font-semibold">Locked in</div>
+                  <div id="lockedBetLine1" class="text-sm text-slate-600 mt-1"></div>
+                  <div id="lockedBetLine2" class="text-sm text-slate-600"></div>
+                  <div id="lockedBetNote" class="text-xs text-slate-500 mt-2 hidden"></div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <button id="wonBtn" class="h-12 rounded-2xl bg-slate-950 text-white font-medium hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">Step 2: Won</button>
+                  <button id="lostBtn" class="h-12 rounded-2xl border border-slate-300 bg-white font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">Step 2: Lost</button>
+                  <button id="cashoutBtn" class="h-12 rounded-2xl bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed">Cash Out (End Run)</button>
+                </div>
+                <div class="text-xs text-slate-500">You cannot start another play until this one is graded.</div>
               </div>
-              <div class="text-xs text-slate-500">Cash Out (End Run) records your actual cash out amount and ends the active play without requiring a full win or loss.</div>
             </div>
           </div>
 
@@ -161,7 +173,7 @@
           </div>
           <div class="border-t border-slate-200"></div>
           <div class="space-y-2">
-            <div class="text-sm text-slate-500">Next play</div>
+            <div class="text-sm text-slate-500">Next Play</div>
             <div id="exportNextPlay" class="font-semibold text-base break-words">Pending</div>
           </div>
         </div>
@@ -190,7 +202,7 @@
       pendingBet: null,
       shownGoal: false,
       shownBusted: false,
-      storageKey: 'ladder-tracker-state-v2'
+      storageKey: 'ladder-tracker-strict-flow-v1'
     };
 
     const els = {
@@ -229,7 +241,10 @@
       modalOverlay: document.getElementById('modalOverlay'),
       modalTitle: document.getElementById('modalTitle'),
       modalDescription: document.getElementById('modalDescription'),
-      modalActions: document.getElementById('modalActions')
+      modalActions: document.getElementById('modalActions'),
+      stepBadge: document.getElementById('stepBadge'),
+      stepHint: document.getElementById('stepHint'),
+      setupWarning: document.getElementById('setupWarning')
     };
 
     function round2(n) {
@@ -299,6 +314,10 @@
       if (result === 'loss') return 'bg-red-50 text-red-700 border-red-200';
       if (result === 'cashout') return 'bg-amber-50 text-amber-700 border-amber-200';
       return 'bg-slate-50 text-slate-700 border-slate-200';
+    }
+
+    function hasValidSetup() {
+      return getStartingBankroll() > 0 && getTargetBankroll() > getStartingBankroll();
     }
 
     function saveState() {
@@ -382,6 +401,14 @@
     }
 
     function lockNextPlay() {
+      if (!hasValidSetup()) {
+        showModal('Finish setup first', 'Enter a starting bankroll above $0 and a goal greater than the starting bankroll before locking a play.', [
+          { label: 'OK', primary: true, onClick: () => {} }
+        ]);
+        return;
+      }
+      if (state.pendingBet) return;
+
       const stake = round2(Number(els.betStake.value));
       const odds = Number(els.betOdds.value);
       const currentBankroll = getCurrentBankroll();
@@ -562,6 +589,47 @@
       }
     }
 
+    function renderStepUI() {
+      const setupReady = hasValidSetup();
+      const currentBankroll = getCurrentBankroll();
+      const inGradeStep = Boolean(state.pendingBet);
+
+      if (!setupReady) {
+        els.setupWarning.classList.remove('hidden');
+        els.setupWarning.textContent = 'Enter a starting bankroll above $0 and set a goal greater than the starting bankroll to begin the ladder.';
+      } else if (currentBankroll <= 0) {
+        els.setupWarning.classList.remove('hidden');
+        els.setupWarning.textContent = 'This run is busted. Restart the run to begin again.';
+      } else {
+        els.setupWarning.classList.add('hidden');
+        els.setupWarning.textContent = '';
+      }
+
+      const inputsDisabled = !setupReady || inGradeStep || currentBankroll <= 0;
+      els.betStake.disabled = inputsDisabled;
+      els.betOdds.disabled = inputsDisabled;
+      els.betNote.disabled = inputsDisabled;
+
+      const stake = Number(els.betStake.value);
+      const odds = Number(els.betOdds.value);
+      const canLock = setupReady && !inGradeStep && currentBankroll > 0 && Number.isFinite(stake) && stake > 0 && Number.isFinite(odds) && odds !== 0 && stake <= currentBankroll;
+      els.lockBtn.disabled = !canLock;
+
+      els.wonBtn.disabled = !inGradeStep;
+      els.lostBtn.disabled = !inGradeStep;
+      els.cashoutBtn.disabled = !inGradeStep;
+
+      if (inGradeStep) {
+        els.stepBadge.textContent = 'Step 2 · Grade Result';
+        els.stepBadge.className = 'inline-flex mt-1 px-3 py-1 rounded-full text-xs border bg-white text-slate-900 border-slate-300';
+        els.stepHint.textContent = 'Your play is locked. Grade it before moving to the next leg.';
+      } else {
+        els.stepBadge.textContent = 'Step 1 · Lock Play';
+        els.stepBadge.className = 'inline-flex mt-1 px-3 py-1 rounded-full text-xs border bg-slate-950 text-white border-slate-950';
+        els.stepHint.textContent = setupReady ? 'Lock your next play to continue the ladder.' : 'Complete the bankroll and goal fields to begin.';
+      }
+    }
+
     function render() {
       const start = getStartingBankroll();
       const current = getCurrentBankroll();
@@ -589,15 +657,10 @@
       els.exportPL.className = `text-xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
       els.exportNextPlay.textContent = nextPlay;
 
-      const stake = Number(els.betStake.value);
-      const odds = Number(els.betOdds.value);
-      const canLock = Number.isFinite(stake) && stake > 0 && Number.isFinite(odds) && odds !== 0 && stake <= current && !state.pendingBet;
-      els.lockBtn.disabled = !canLock;
-      els.lockBtn.className = `w-full h-12 rounded-2xl font-medium ${canLock ? 'bg-slate-950 text-white hover:bg-slate-800' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`;
-
       renderLockedBet();
       renderHistory();
       renderExportLog();
+      renderStepUI();
     }
 
     function exportRunJson() {
@@ -607,7 +670,8 @@
         currentBankroll: getCurrentBankroll(),
         targetBankroll: getTargetBankroll(),
         bets: state.bets,
-        nextPlayLabel: nextPlayLabel()
+        nextPlayLabel: nextPlayLabel(),
+        mode: 'strict-flow'
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
