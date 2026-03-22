@@ -5,24 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ladder Tracker</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    .card-shadow { box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12); }
-    .soft-shadow { box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); }
+    .bg-app {
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,0.16), transparent 28%),
+        radial-gradient(circle at top right, rgba(168,85,247,0.16), transparent 30%),
+        linear-gradient(180deg, #08111f 0%, #0f172a 42%, #111827 100%);
+    }
+    .glass {
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.28);
+    }
+    .glass-soft {
+      background: rgba(15, 23, 42, 0.56);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+    }
+    .text-glow {
+      text-shadow: 0 0 24px rgba(96, 165, 250, 0.18);
+    }
+    .share-gradient {
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,0.28), transparent 32%),
+        radial-gradient(circle at top right, rgba(192,132,252,0.28), transparent 36%),
+        linear-gradient(180deg, #0b1220 0%, #101827 100%);
+    }
+    .pill-win { background: rgba(34,197,94,0.14); color: #86efac; border-color: rgba(34,197,94,0.25); }
+    .pill-loss { background: rgba(239,68,68,0.14); color: #fca5a5; border-color: rgba(239,68,68,0.25); }
+    .pill-cash { background: rgba(245,158,11,0.14); color: #fcd34d; border-color: rgba(245,158,11,0.25); }
   </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-900">
-  <div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-6">
-    <div class="bg-white rounded-[28px] card-shadow overflow-hidden">
-      <div class="p-6 border-b border-slate-200">
-        <div class="flex flex-wrap items-center justify-between gap-4">
+<body class="bg-app min-h-screen text-slate-100">
+  <div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6">
+    <div class="glass rounded-[32px] overflow-hidden">
+      <div class="p-6 md:p-7 border-b border-white/10">
+        <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 class="text-3xl font-bold">Ladder Tracker</h1>
-            <p class="text-sm text-slate-500 mt-1">A strict step-by-step ladder flow. Lock a play, grade it, then move to the next one.</p>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-sky-400/20 bg-sky-400/10 text-sky-200 text-xs uppercase tracking-[0.25em]">Ladder Mode</div>
+            <h1 class="text-3xl md:text-4xl font-bold mt-3 text-glow">Ladder Tracker</h1>
+            <p class="text-sm md:text-base text-slate-300 mt-2 max-w-2xl">A strict run flow. Lock a play, grade the result, then advance to the next leg. Built for tracking momentum, not just calculating odds.</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button id="exportBtn" class="px-4 h-11 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-sm font-medium">Export Run</button>
-            <button id="restartBtn" class="px-4 h-11 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-sm font-medium">Restart Run</button>
+            <button id="downloadPngBtn" class="px-4 h-11 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold">Download PNG</button>
+            <button id="restartBtn" class="px-4 h-11 rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 font-medium">Restart Run</button>
           </div>
         </div>
       </div>
@@ -30,168 +60,175 @@
       <div class="p-4 md:p-6 space-y-6">
         <div class="grid md:grid-cols-3 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-2">Run name</label>
-            <input id="runName" value="Road to 1K" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+            <label class="block text-sm font-medium mb-2 text-slate-300">Run name</label>
+            <input id="runName" value="Road to 1K" class="w-full h-12 rounded-2xl border border-white/10 bg-slate-950/50 px-4 text-white placeholder:text-slate-500" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-2">Starting bankroll</label>
-            <input id="startingBankroll" type="number" inputmode="decimal" value="10" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+            <label class="block text-sm font-medium mb-2 text-slate-300">Starting bankroll</label>
+            <input id="startingBankroll" type="number" inputmode="decimal" value="10" class="w-full h-12 rounded-2xl border border-white/10 bg-slate-950/50 px-4 text-white placeholder:text-slate-500" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-2">Goal bankroll</label>
-            <input id="targetBankroll" type="number" inputmode="decimal" value="1000" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+            <label class="block text-sm font-medium mb-2 text-slate-300">Goal bankroll</label>
+            <input id="targetBankroll" type="number" inputmode="decimal" value="1000" class="w-full h-12 rounded-2xl border border-white/10 bg-slate-950/50 px-4 text-white placeholder:text-slate-500" />
           </div>
         </div>
 
         <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
-            <div class="text-sm text-slate-500">Current bankroll</div>
+          <div class="glass-soft rounded-[26px] p-5">
+            <div class="text-sm text-slate-400">Current Bankroll</div>
             <div id="currentBankrollDisplay" class="text-2xl md:text-3xl font-bold mt-2">$10.00</div>
           </div>
-          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
-            <div class="text-sm text-slate-500">Total P/L</div>
-            <div id="totalProfitDisplay" class="text-2xl md:text-3xl font-bold mt-2 text-green-600">+$0.00</div>
+          <div class="glass-soft rounded-[26px] p-5">
+            <div class="text-sm text-slate-400">Total P/L</div>
+            <div id="totalProfitDisplay" class="text-2xl md:text-3xl font-bold mt-2 text-emerald-300">+$0.00</div>
           </div>
-          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
-            <div class="text-sm text-slate-500">Goal</div>
+          <div class="glass-soft rounded-[26px] p-5">
+            <div class="text-sm text-slate-400">Goal</div>
             <div id="goalDisplay" class="text-2xl md:text-3xl font-bold mt-2">$1,000.00</div>
           </div>
-          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
-            <div class="text-sm text-slate-500">Next Play</div>
-            <div id="nextPlaySummary" class="text-base md:text-xl font-bold mt-2 break-words">Pending</div>
+          <div class="rounded-[26px] p-5 bg-gradient-to-br from-sky-500/20 to-violet-500/20 border border-sky-300/15">
+            <div class="text-sm text-sky-100/80">Next Play</div>
+            <div id="nextPlaySummary" class="text-base md:text-lg font-bold mt-2 break-words">Pending</div>
           </div>
         </div>
 
-        <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-5 space-y-3">
+        <div class="glass-soft rounded-[28px] p-5 space-y-3">
           <div class="flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <div class="text-sm text-slate-500">Run progress</div>
-              <div class="text-xs text-slate-500 mt-1" id="stepHint">Step 1: Lock your next play.</div>
+              <div class="text-sm text-slate-400">Run progress</div>
+              <div id="stepHint" class="text-xs text-slate-400 mt-1">Step 1: Lock your next play.</div>
             </div>
             <div class="text-right">
               <div id="progressLabel" class="font-medium text-sm">0%</div>
-              <div id="stepBadge" class="inline-flex mt-1 px-3 py-1 rounded-full text-xs border bg-slate-950 text-white border-slate-950">Step 1 · Lock Play</div>
+              <div id="stepBadge" class="inline-flex mt-1 px-3 py-1 rounded-full text-xs border bg-sky-500 text-slate-950 border-sky-400 font-semibold">Step 1 · Lock Play</div>
             </div>
           </div>
-          <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
-            <div id="progressBar" class="h-full bg-slate-900 rounded-full" style="width:0%"></div>
+          <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full rounded-full bg-gradient-to-r from-sky-400 to-violet-400" style="width:0%"></div>
           </div>
         </div>
 
         <div class="grid xl:grid-cols-[0.95fr_1.05fr] gap-6">
-          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
-            <h2 class="text-xl font-bold mb-4">Strict ladder flow</h2>
+          <div class="glass-soft rounded-[28px] p-5">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <h2 class="text-xl font-bold">Strict Ladder Flow</h2>
+              <div class="text-xs text-slate-400">No skipping steps</div>
+            </div>
 
-            <div id="setupWarning" class="hidden mb-4 rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 p-4 text-sm"></div>
+            <div id="setupWarning" class="hidden mb-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 text-amber-200 p-4 text-sm"></div>
 
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium mb-2">Stake</label>
-                <input id="betStake" type="number" inputmode="decimal" placeholder="10" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+                <label class="block text-sm font-medium mb-2 text-slate-300">Stake</label>
+                <input id="betStake" type="number" inputmode="decimal" placeholder="10" class="w-full h-12 rounded-2xl border border-white/10 bg-slate-950/50 px-4 text-white placeholder:text-slate-500" />
               </div>
               <div>
-                <label class="block text-sm font-medium mb-2">American odds</label>
-                <input id="betOdds" type="number" inputmode="numeric" placeholder="-235" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+                <label class="block text-sm font-medium mb-2 text-slate-300">American odds</label>
+                <input id="betOdds" type="number" inputmode="numeric" placeholder="-235" class="w-full h-12 rounded-2xl border border-white/10 bg-slate-950/50 px-4 text-white placeholder:text-slate-500" />
               </div>
               <div>
-                <label class="block text-sm font-medium mb-2">Note</label>
-                <input id="betNote" placeholder="Optional note" class="w-full h-12 rounded-2xl border border-slate-300 px-4 bg-white" />
+                <label class="block text-sm font-medium mb-2 text-slate-300">Note</label>
+                <input id="betNote" placeholder="Optional note" class="w-full h-12 rounded-2xl border border-white/10 bg-slate-950/50 px-4 text-white placeholder:text-slate-500" />
               </div>
             </div>
 
             <div class="mt-5 space-y-4">
-              <button id="lockBtn" class="w-full h-12 rounded-2xl bg-slate-950 text-white font-medium hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">Step 1: Lock Next Play</button>
+              <button id="lockBtn" class="w-full h-12 rounded-2xl bg-sky-500 text-slate-950 font-semibold hover:bg-sky-400 disabled:opacity-40 disabled:cursor-not-allowed">Step 1: Lock Next Play</button>
 
               <div id="lockedBetWrap" class="hidden space-y-4">
-                <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
-                  <div class="font-semibold">Locked in</div>
-                  <div id="lockedBetLine1" class="text-sm text-slate-600 mt-1"></div>
-                  <div id="lockedBetLine2" class="text-sm text-slate-600"></div>
+                <div class="rounded-2xl border border-white/10 p-4 bg-slate-950/35">
+                  <div class="font-semibold text-sky-200">Locked In</div>
+                  <div id="lockedBetLine1" class="text-sm text-slate-300 mt-1"></div>
+                  <div id="lockedBetLine2" class="text-sm text-slate-400"></div>
                   <div id="lockedBetNote" class="text-xs text-slate-500 mt-2 hidden"></div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <button id="wonBtn" class="h-12 rounded-2xl bg-slate-950 text-white font-medium hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">Step 2: Won</button>
-                  <button id="lostBtn" class="h-12 rounded-2xl border border-slate-300 bg-white font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">Step 2: Lost</button>
-                  <button id="cashoutBtn" class="h-12 rounded-2xl bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed">Cash Out (End Run)</button>
+                  <button id="wonBtn" class="h-12 rounded-2xl bg-emerald-400 text-slate-950 font-semibold hover:bg-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed">Step 2: Won</button>
+                  <button id="lostBtn" class="h-12 rounded-2xl bg-white text-slate-950 font-semibold hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed">Step 2: Lost</button>
+                  <button id="cashoutBtn" class="h-12 rounded-2xl bg-rose-500 text-white font-semibold hover:bg-rose-400 disabled:opacity-40 disabled:cursor-not-allowed">Cash Out</button>
                 </div>
-                <div class="text-xs text-slate-500">You cannot start another play until this one is graded.</div>
+                <div class="text-xs text-slate-400">You must grade this play before you can continue the run.</div>
               </div>
             </div>
           </div>
 
-          <div class="bg-white rounded-[24px] soft-shadow border border-slate-200 p-5">
-            <h2 class="text-xl font-bold mb-4">Run history</h2>
+          <div class="glass-soft rounded-[28px] p-5">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <h2 class="text-xl font-bold">Run History</h2>
+              <div class="text-xs text-slate-400" id="historyCount">0 plays</div>
+            </div>
             <div id="historyList" class="space-y-3">
-              <div class="rounded-2xl border border-dashed border-slate-300 p-6 text-slate-500 text-sm">No plays graded yet.</div>
+              <div class="rounded-2xl border border-dashed border-white/10 p-6 text-slate-500 text-sm">No plays graded yet.</div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div id="exportCard" class="w-full max-w-md mx-auto rounded-[28px] overflow-hidden border border-slate-200 bg-white card-shadow self-start lg:sticky lg:top-6">
-      <div class="px-6 py-5 bg-slate-950 text-white">
+    <div id="shareCard" class="w-full max-w-md mx-auto rounded-[32px] overflow-hidden border border-white/10 share-gradient shadow-2xl self-start xl:sticky xl:top-6">
+      <div class="px-6 py-5 border-b border-white/10">
         <div class="flex items-center justify-between gap-3">
           <div>
-            <div class="text-xs uppercase tracking-[0.25em] text-slate-300">Ladder Tracker</div>
-            <div id="exportRunName" class="text-2xl font-bold mt-1">Road to 1K</div>
+            <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Ladder Tracker</div>
+            <div id="exportRunName" class="text-2xl font-bold mt-1 text-white">Road to 1K</div>
           </div>
-          <div class="rounded-2xl bg-white/10 p-3 text-xl">📈</div>
+          <div class="rounded-2xl bg-white/10 px-3 py-2 text-lg">🚀</div>
         </div>
       </div>
+
       <div class="p-6 space-y-5">
         <div class="grid grid-cols-3 gap-3 text-center">
-          <div class="rounded-2xl border border-slate-200 p-3">
-            <div class="text-xs text-slate-500">Start</div>
-            <div id="exportStart" class="font-semibold text-lg">$10.00</div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
+            <div class="text-xs text-slate-400">Start</div>
+            <div id="exportStart" class="font-semibold text-lg text-white">$10.00</div>
           </div>
-          <div class="rounded-2xl border border-slate-200 p-3">
-            <div class="text-xs text-slate-500">Now</div>
-            <div id="exportNow" class="font-semibold text-lg">$10.00</div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
+            <div class="text-xs text-slate-400">Now</div>
+            <div id="exportNow" class="font-semibold text-lg text-white">$10.00</div>
           </div>
-          <div class="rounded-2xl border border-slate-200 p-3">
-            <div class="text-xs text-slate-500">Goal</div>
-            <div id="exportGoal" class="font-semibold text-lg">$1,000.00</div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
+            <div class="text-xs text-slate-400">Goal</div>
+            <div id="exportGoal" class="font-semibold text-lg text-white">$1,000.00</div>
           </div>
         </div>
 
-        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-2">
+        <div class="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-2">
           <div class="flex items-center justify-between text-sm">
-            <span class="text-slate-500">Run Progress</span>
-            <span id="exportProgressLabel" class="font-medium">0%</span>
+            <span class="text-slate-400">Run Progress</span>
+            <span id="exportProgressLabel" class="font-medium text-white">0%</span>
           </div>
-          <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
-            <div id="exportProgressBar" class="h-full bg-slate-900 rounded-full" style="width:0%"></div>
+          <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+            <div id="exportProgressBar" class="h-full rounded-full bg-gradient-to-r from-sky-400 to-violet-400" style="width:0%"></div>
           </div>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 p-4 space-y-3">
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-sm text-slate-500">Profit / Loss</span>
-            <span id="exportPL" class="text-xl font-bold text-green-600">+$0.00</span>
+            <span class="text-sm text-slate-400">Profit / Loss</span>
+            <span id="exportPL" class="text-xl font-bold text-emerald-300">+$0.00</span>
           </div>
-          <div class="border-t border-slate-200"></div>
+          <div class="border-t border-white/10"></div>
           <div class="space-y-2">
-            <div class="text-sm text-slate-500">Next Play</div>
-            <div id="exportNextPlay" class="font-semibold text-base break-words">Pending</div>
+            <div class="text-sm text-slate-400">Next Play</div>
+            <div id="exportNextPlay" class="font-semibold text-base break-words text-white">Pending</div>
           </div>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 p-4">
-          <div class="text-sm text-slate-500 mb-3">Run Log</div>
-          <div id="exportLog" class="space-y-2 max-h-80 overflow-auto pr-1">
-            <div class="text-sm text-slate-400">No bets logged yet.</div>
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div class="text-sm text-slate-400 mb-3">Run Log</div>
+          <div id="exportLog" class="space-y-2 max-h-96 overflow-auto pr-1">
+            <div class="text-sm text-slate-500">No bets logged yet.</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="modalOverlay" class="hidden fixed inset-0 bg-slate-950/50 p-4 items-center justify-center z-50">
-    <div class="w-full max-w-md bg-white rounded-[28px] p-6 card-shadow">
-      <div class="text-2xl font-bold" id="modalTitle"></div>
-      <div class="text-slate-600 mt-2" id="modalDescription"></div>
+  <div id="modalOverlay" class="hidden fixed inset-0 bg-slate-950/70 p-4 items-center justify-center z-50">
+    <div class="w-full max-w-md bg-slate-900 border border-white/10 rounded-[28px] p-6 shadow-2xl">
+      <div class="text-2xl font-bold text-white" id="modalTitle"></div>
+      <div class="text-slate-300 mt-2" id="modalDescription"></div>
       <div class="mt-6 flex flex-wrap justify-end gap-2" id="modalActions"></div>
     </div>
   </div>
@@ -202,7 +239,7 @@
       pendingBet: null,
       shownGoal: false,
       shownBusted: false,
-      storageKey: 'ladder-tracker-strict-flow-v1'
+      storageKey: 'ladder-tracker-strict-flow-v2'
     };
 
     const els = {
@@ -217,12 +254,13 @@
       lostBtn: document.getElementById('lostBtn'),
       cashoutBtn: document.getElementById('cashoutBtn'),
       restartBtn: document.getElementById('restartBtn'),
-      exportBtn: document.getElementById('exportBtn'),
+      downloadPngBtn: document.getElementById('downloadPngBtn'),
       lockedBetWrap: document.getElementById('lockedBetWrap'),
       lockedBetLine1: document.getElementById('lockedBetLine1'),
       lockedBetLine2: document.getElementById('lockedBetLine2'),
       lockedBetNote: document.getElementById('lockedBetNote'),
       historyList: document.getElementById('historyList'),
+      historyCount: document.getElementById('historyCount'),
       currentBankrollDisplay: document.getElementById('currentBankrollDisplay'),
       totalProfitDisplay: document.getElementById('totalProfitDisplay'),
       goalDisplay: document.getElementById('goalDisplay'),
@@ -238,6 +276,7 @@
       exportPL: document.getElementById('exportPL'),
       exportNextPlay: document.getElementById('exportNextPlay'),
       exportLog: document.getElementById('exportLog'),
+      shareCard: document.getElementById('shareCard'),
       modalOverlay: document.getElementById('modalOverlay'),
       modalTitle: document.getElementById('modalTitle'),
       modalDescription: document.getElementById('modalDescription'),
@@ -310,10 +349,10 @@
     }
 
     function statusTone(result) {
-      if (result === 'win') return 'bg-green-50 text-green-700 border-green-200';
-      if (result === 'loss') return 'bg-red-50 text-red-700 border-red-200';
-      if (result === 'cashout') return 'bg-amber-50 text-amber-700 border-amber-200';
-      return 'bg-slate-50 text-slate-700 border-slate-200';
+      if (result === 'win') return 'pill-win';
+      if (result === 'loss') return 'pill-loss';
+      if (result === 'cashout') return 'pill-cash';
+      return 'bg-white/10 text-slate-300 border-white/10';
     }
 
     function hasValidSetup() {
@@ -383,8 +422,8 @@
         const btn = document.createElement('button');
         btn.textContent = action.label;
         btn.className = action.primary
-          ? 'px-4 h-11 rounded-2xl bg-slate-950 text-white font-medium hover:bg-slate-800'
-          : 'px-4 h-11 rounded-2xl border border-slate-300 bg-white font-medium hover:bg-slate-50';
+          ? 'px-4 h-11 rounded-2xl bg-sky-500 text-slate-950 font-semibold hover:bg-sky-400'
+          : 'px-4 h-11 rounded-2xl border border-white/15 bg-white/5 text-white font-medium hover:bg-white/10';
         btn.onclick = () => {
           hideModal();
           action.onClick();
@@ -507,9 +546,10 @@
 
     function renderHistory() {
       els.historyList.innerHTML = '';
+      els.historyCount.textContent = `${state.bets.length} ${state.bets.length === 1 ? 'play' : 'plays'}`;
       if (state.bets.length === 0) {
         const empty = document.createElement('div');
-        empty.className = 'rounded-2xl border border-dashed border-slate-300 p-6 text-slate-500 text-sm';
+        empty.className = 'rounded-2xl border border-dashed border-white/10 p-6 text-slate-500 text-sm';
         empty.textContent = 'No plays graded yet.';
         els.historyList.appendChild(empty);
         return;
@@ -517,7 +557,7 @@
 
       state.bets.forEach((bet, idx) => {
         const item = document.createElement('div');
-        item.className = 'rounded-2xl border border-slate-200 p-4';
+        item.className = 'rounded-2xl border border-white/10 bg-slate-950/25 p-4';
 
         let detail = '';
         if (bet.result === 'win') detail = `Return ${formatMoney(bet.returnAmount)} · Profit ${formatMoney(bet.profit)}`;
@@ -527,12 +567,12 @@
         item.innerHTML = `
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div class="font-semibold">Leg ${idx + 1}</div>
-              <div class="text-sm text-slate-500">${formatMoney(bet.stake)} at ${formatOdds(bet.odds)}</div>
+              <div class="font-semibold text-white">Leg ${idx + 1}</div>
+              <div class="text-sm text-slate-400">${formatMoney(bet.stake)} at ${formatOdds(bet.odds)}</div>
             </div>
             <span class="px-3 py-1 rounded-full text-sm border ${statusTone(bet.result)}">${bet.result === 'cashout' ? 'Cash Out' : bet.result === 'win' ? 'Won' : 'Lost'}</span>
           </div>
-          <div class="text-sm text-slate-600 mt-2">${detail}</div>
+          <div class="text-sm text-slate-300 mt-2">${detail}</div>
           ${bet.note ? `<div class="text-xs text-slate-500 mt-2">${bet.note}</div>` : ''}
         `;
         els.historyList.appendChild(item);
@@ -543,7 +583,7 @@
       els.exportLog.innerHTML = '';
       if (state.bets.length === 0) {
         const empty = document.createElement('div');
-        empty.className = 'text-sm text-slate-400';
+        empty.className = 'text-sm text-slate-500';
         empty.textContent = 'No bets logged yet.';
         els.exportLog.appendChild(empty);
         return;
@@ -551,7 +591,7 @@
 
       state.bets.forEach((bet, idx) => {
         const wrap = document.createElement('div');
-        wrap.className = 'rounded-2xl bg-slate-50 p-3 border border-slate-200';
+        wrap.className = 'rounded-2xl bg-white/5 p-3 border border-white/10';
 
         let detail = '';
         if (bet.result === 'win') detail = `Returned ${formatMoney(bet.returnAmount)} · Profit ${formatMoney(bet.profit)}`;
@@ -561,12 +601,12 @@
         wrap.innerHTML = `
           <div class="flex items-center justify-between gap-3">
             <div>
-              <div class="font-medium">Leg ${idx + 1}</div>
-              <div class="text-sm text-slate-500">Stake ${formatMoney(bet.stake)} · Odds ${formatOdds(bet.odds)}</div>
+              <div class="font-medium text-white">Leg ${idx + 1}</div>
+              <div class="text-sm text-slate-400">Stake ${formatMoney(bet.stake)} · Odds ${formatOdds(bet.odds)}</div>
             </div>
             <span class="px-3 py-1 rounded-full text-sm border ${statusTone(bet.result)}">${bet.result === 'cashout' ? 'Cash Out' : bet.result === 'win' ? 'Won' : 'Lost'}</span>
           </div>
-          <div class="mt-2 text-sm text-slate-600">${detail}</div>
+          <div class="mt-2 text-sm text-slate-300">${detail}</div>
           ${bet.note ? `<div class="mt-2 text-xs text-slate-500">${bet.note}</div>` : ''}
         `;
         els.exportLog.appendChild(wrap);
@@ -614,18 +654,17 @@
       const odds = Number(els.betOdds.value);
       const canLock = setupReady && !inGradeStep && currentBankroll > 0 && Number.isFinite(stake) && stake > 0 && Number.isFinite(odds) && odds !== 0 && stake <= currentBankroll;
       els.lockBtn.disabled = !canLock;
-
       els.wonBtn.disabled = !inGradeStep;
       els.lostBtn.disabled = !inGradeStep;
       els.cashoutBtn.disabled = !inGradeStep;
 
       if (inGradeStep) {
         els.stepBadge.textContent = 'Step 2 · Grade Result';
-        els.stepBadge.className = 'inline-flex mt-1 px-3 py-1 rounded-full text-xs border bg-white text-slate-900 border-slate-300';
+        els.stepBadge.className = 'inline-flex mt-1 px-3 py-1 rounded-full text-xs border bg-white text-slate-950 border-white font-semibold';
         els.stepHint.textContent = 'Your play is locked. Grade it before moving to the next leg.';
       } else {
         els.stepBadge.textContent = 'Step 1 · Lock Play';
-        els.stepBadge.className = 'inline-flex mt-1 px-3 py-1 rounded-full text-xs border bg-slate-950 text-white border-slate-950';
+        els.stepBadge.className = 'inline-flex mt-1 px-3 py-1 rounded-full text-xs border bg-sky-500 text-slate-950 border-sky-400 font-semibold';
         els.stepHint.textContent = setupReady ? 'Lock your next play to continue the ladder.' : 'Complete the bankroll and goal fields to begin.';
       }
     }
@@ -645,7 +684,7 @@
       els.progressBar.style.width = `${progress}%`;
 
       els.totalProfitDisplay.textContent = `${totalProfit >= 0 ? '+' : ''}${formatMoney(totalProfit)}`;
-      els.totalProfitDisplay.className = `text-2xl md:text-3xl font-bold mt-2 ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+      els.totalProfitDisplay.className = `text-2xl md:text-3xl font-bold mt-2 ${totalProfit >= 0 ? 'text-emerald-300' : 'text-rose-300'}`;
 
       els.exportRunName.textContent = els.runName.value || 'Current Run';
       els.exportStart.textContent = formatMoney(start);
@@ -654,7 +693,7 @@
       els.exportProgressLabel.textContent = `${progress.toFixed(0)}%`;
       els.exportProgressBar.style.width = `${progress}%`;
       els.exportPL.textContent = `${totalProfit >= 0 ? '+' : ''}${formatMoney(totalProfit)}`;
-      els.exportPL.className = `text-xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+      els.exportPL.className = `text-xl font-bold ${totalProfit >= 0 ? 'text-emerald-300' : 'text-rose-300'}`;
       els.exportNextPlay.textContent = nextPlay;
 
       renderLockedBet();
@@ -663,23 +702,30 @@
       renderStepUI();
     }
 
-    function exportRunJson() {
-      const payload = {
-        runName: els.runName.value || 'Current Run',
-        startBankroll: getStartingBankroll(),
-        currentBankroll: getCurrentBankroll(),
-        targetBankroll: getTargetBankroll(),
-        bets: state.bets,
-        nextPlayLabel: nextPlayLabel(),
-        mode: 'strict-flow'
-      };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${(payload.runName || 'ladder-run').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+    async function downloadShareCard() {
+      const previousText = els.downloadPngBtn.textContent;
+      els.downloadPngBtn.disabled = true;
+      els.downloadPngBtn.textContent = 'Rendering...';
+      try {
+        const canvas = await html2canvas(els.shareCard, {
+          backgroundColor: null,
+          scale: 2,
+          useCORS: true,
+          logging: false
+        });
+        const link = document.createElement('a');
+        link.download = `${(els.runName.value || 'ladder-run').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-share-card.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (error) {
+        console.error(error);
+        showModal('Export failed', 'The share card could not be rendered. Refresh the page and try again.', [
+          { label: 'OK', primary: true, onClick: () => {} }
+        ]);
+      } finally {
+        els.downloadPngBtn.disabled = false;
+        els.downloadPngBtn.textContent = previousText;
+      }
     }
 
     els.lockBtn.addEventListener('click', lockNextPlay);
@@ -687,7 +733,7 @@
     els.lostBtn.addEventListener('click', () => gradePendingBet('loss'));
     els.cashoutBtn.addEventListener('click', cashOutRun);
     els.restartBtn.addEventListener('click', restartRun);
-    els.exportBtn.addEventListener('click', exportRunJson);
+    els.downloadPngBtn.addEventListener('click', downloadShareCard);
 
     [els.runName, els.startingBankroll, els.targetBankroll, els.betStake, els.betOdds, els.betNote].forEach(el => {
       el.addEventListener('input', () => {
